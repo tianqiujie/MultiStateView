@@ -5,11 +5,13 @@
         <attr name="msv_loadingView" format="reference" />
         <attr name="msv_emptyView" format="reference" />
         <attr name="msv_errorView" format="reference" />
+        <attr name="msv_unkonwView" format="reference" />
         <attr name="msv_viewState" format="enum">
             <enum name="content" value="0" />
             <enum name="error" value="1" />
             <enum name="empty" value="2" />
             <enum name="loading" value="3" />
+            <enum name="unknow" value="4"/>
         </attr>
         <attr name="msv_animateViewChanges" format="boolean" />
     </declare-styleable>

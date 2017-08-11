@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
+import android.widget.TextView;
 import com.kennyc.multistateview.R;
 
 import java.lang.annotation.Retention;
@@ -38,10 +39,20 @@ public class MultiStateView extends FrameLayout {
 
     public static final int VIEW_STATE_LOADING = 3;
 
+
+    public void setText(int textviewID, String text) {
+        View view = getView(mViewState).findViewById(textviewID);
+        if (view instanceof TextView) {
+            ((TextView) view).setText(text);
+        }
+    }
+
+
     @Retention(RetentionPolicy.SOURCE)
-    @IntDef({VIEW_STATE_UNKNOWN, VIEW_STATE_CONTENT, VIEW_STATE_ERROR, VIEW_STATE_EMPTY, VIEW_STATE_LOADING})
+    @IntDef({ VIEW_STATE_UNKNOWN, VIEW_STATE_CONTENT, VIEW_STATE_ERROR, VIEW_STATE_EMPTY, VIEW_STATE_LOADING })
     public @interface ViewState {
     }
+
 
     private LayoutInflater mInflater;
 
@@ -53,6 +64,8 @@ public class MultiStateView extends FrameLayout {
 
     private View mEmptyView;
 
+    private View mUnknowView;
+
     private boolean mAnimateViewChanges = false;
 
     @Nullable
@@ -61,19 +74,23 @@ public class MultiStateView extends FrameLayout {
     @ViewState
     private int mViewState = VIEW_STATE_UNKNOWN;
 
+
     public MultiStateView(Context context) {
         this(context, null);
     }
+
 
     public MultiStateView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(attrs);
     }
 
+
     public MultiStateView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         init(attrs);
     }
+
 
     private void init(AttributeSet attrs) {
         mInflater = LayoutInflater.from(getContext());
@@ -89,6 +106,12 @@ public class MultiStateView extends FrameLayout {
         if (emptyViewResId > -1) {
             mEmptyView = mInflater.inflate(emptyViewResId, this, false);
             addView(mEmptyView, mEmptyView.getLayoutParams());
+        }
+
+        int unkownViewResId = a.getResourceId(R.styleable.MultiStateView_msv_unkonwView, -1);
+        if (unkownViewResId > -1) {
+            mUnknowView = mInflater.inflate(unkownViewResId, this, false);
+            addView(mUnknowView, mUnknowView.getLayoutParams());
         }
 
         int errorViewResId = a.getResourceId(R.styleable.MultiStateView_msv_errorView, -1);
@@ -126,12 +149,14 @@ public class MultiStateView extends FrameLayout {
         a.recycle();
     }
 
+
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         if (mContentView == null) throw new IllegalArgumentException("Content view is not defined");
         setView(VIEW_STATE_UNKNOWN);
     }
+
 
     /* All of the addView methods have been overridden so that it can obtain the content view via XML
      It is NOT recommended to add views into MultiStateView via the addView methods, but rather use
@@ -142,11 +167,13 @@ public class MultiStateView extends FrameLayout {
         super.addView(child);
     }
 
+
     @Override
     public void addView(View child, int index) {
         if (isValidContentView(child)) mContentView = child;
         super.addView(child, index);
     }
+
 
     @Override
     public void addView(View child, int index, ViewGroup.LayoutParams params) {
@@ -154,11 +181,13 @@ public class MultiStateView extends FrameLayout {
         super.addView(child, index, params);
     }
 
+
     @Override
     public void addView(View child, ViewGroup.LayoutParams params) {
         if (isValidContentView(child)) mContentView = child;
         super.addView(child, params);
     }
+
 
     @Override
     public void addView(View child, int width, int height) {
@@ -166,17 +195,20 @@ public class MultiStateView extends FrameLayout {
         super.addView(child, width, height);
     }
 
+
     @Override
     protected boolean addViewInLayout(View child, int index, ViewGroup.LayoutParams params) {
         if (isValidContentView(child)) mContentView = child;
         return super.addViewInLayout(child, index, params);
     }
 
+
     @Override
     protected boolean addViewInLayout(View child, int index, ViewGroup.LayoutParams params, boolean preventRequestLayout) {
         if (isValidContentView(child)) mContentView = child;
         return super.addViewInLayout(child, index, params, preventRequestLayout);
     }
+
 
     /**
      * Returns the {@link View} associated with the {@link com.kennyc.view.MultiStateView.ViewState}
@@ -198,21 +230,22 @@ public class MultiStateView extends FrameLayout {
 
             case VIEW_STATE_ERROR:
                 return mErrorView;
-
+            case VIEW_STATE_UNKNOWN:
+                return mUnknowView;
             default:
                 return null;
         }
     }
 
+
     /**
      * Returns the current {@link com.kennyc.view.MultiStateView.ViewState}
-     *
-     * @return
      */
     @ViewState
     public int getViewState() {
         return mViewState;
     }
+
 
     /**
      * Sets the current {@link com.kennyc.view.MultiStateView.ViewState}
@@ -228,10 +261,12 @@ public class MultiStateView extends FrameLayout {
         }
     }
 
+
     /**
      * Shows the {@link View} based on the {@link com.kennyc.view.MultiStateView.ViewState}
      */
     private void setView(@ViewState int previousState) {
+        setClickable(true);
         switch (mViewState) {
             case VIEW_STATE_LOADING:
                 if (mLoadingView == null) {
@@ -241,7 +276,7 @@ public class MultiStateView extends FrameLayout {
                 if (mContentView != null) mContentView.setVisibility(View.GONE);
                 if (mErrorView != null) mErrorView.setVisibility(View.GONE);
                 if (mEmptyView != null) mEmptyView.setVisibility(View.GONE);
-
+                if (mUnknowView != null) mUnknowView.setVisibility(GONE);
                 if (mAnimateViewChanges) {
                     animateLayoutChange(getView(previousState));
                 } else {
@@ -254,11 +289,10 @@ public class MultiStateView extends FrameLayout {
                     throw new NullPointerException("Empty View");
                 }
 
-
                 if (mLoadingView != null) mLoadingView.setVisibility(View.GONE);
                 if (mErrorView != null) mErrorView.setVisibility(View.GONE);
                 if (mContentView != null) mContentView.setVisibility(View.GONE);
-
+                if (mUnknowView != null) mUnknowView.setVisibility(GONE);
                 if (mAnimateViewChanges) {
                     animateLayoutChange(getView(previousState));
                 } else {
@@ -271,11 +305,10 @@ public class MultiStateView extends FrameLayout {
                     throw new NullPointerException("Error View");
                 }
 
-
                 if (mLoadingView != null) mLoadingView.setVisibility(View.GONE);
                 if (mContentView != null) mContentView.setVisibility(View.GONE);
                 if (mEmptyView != null) mEmptyView.setVisibility(View.GONE);
-
+                if (mUnknowView != null) mUnknowView.setVisibility(GONE);
                 if (mAnimateViewChanges) {
                     animateLayoutChange(getView(previousState));
                 } else {
@@ -283,17 +316,35 @@ public class MultiStateView extends FrameLayout {
                 }
                 break;
 
+            case VIEW_STATE_UNKNOWN:
+                if (mUnknowView == null) {
+                    throw new NullPointerException("Unknow View");
+                }
+
+                if (mLoadingView != null) mLoadingView.setVisibility(View.GONE);
+                if (mContentView != null) mContentView.setVisibility(View.GONE);
+                if (mEmptyView != null) mEmptyView.setVisibility(View.GONE);
+                if (mErrorView != null) mErrorView.setVisibility(GONE);
+
+                if (mAnimateViewChanges) {
+                    animateLayoutChange(getView(previousState));
+                } else {
+                    mUnknowView.setVisibility(View.VISIBLE);
+                }
+                break;
+
             case VIEW_STATE_CONTENT:
             default:
+                setClickable(false);
                 if (mContentView == null) {
                     // Should never happen, the view should throw an exception if no content view is present upon creation
                     throw new NullPointerException("Content View");
                 }
 
-
                 if (mLoadingView != null) mLoadingView.setVisibility(View.GONE);
                 if (mErrorView != null) mErrorView.setVisibility(View.GONE);
                 if (mEmptyView != null) mEmptyView.setVisibility(View.GONE);
+                if (mUnknowView != null) mUnknowView.setVisibility(GONE);
 
                 if (mAnimateViewChanges) {
                     animateLayoutChange(getView(previousState));
@@ -304,25 +355,26 @@ public class MultiStateView extends FrameLayout {
         }
     }
 
+
     /**
      * Checks if the given {@link View} is valid for the Content View
      *
      * @param view The {@link View} to check
-     * @return
      */
     private boolean isValidContentView(View view) {
         if (mContentView != null && mContentView != view) {
             return false;
         }
 
-        return view != mLoadingView && view != mErrorView && view != mEmptyView;
+        return view != mLoadingView && view != mErrorView && view != mEmptyView && view != mUnknowView;
     }
+
 
     /**
      * Sets the view for the given view state
      *
-     * @param view          The {@link View} to use
-     * @param state         The {@link com.kennyc.view.MultiStateView.ViewState}to set
+     * @param view The {@link View} to use
+     * @param state The {@link com.kennyc.view.MultiStateView.ViewState}to set
      * @param switchToState If the {@link com.kennyc.view.MultiStateView.ViewState} should be switched to
      */
     public void setViewForState(View view, @ViewState int state, boolean switchToState) {
@@ -350,27 +402,35 @@ public class MultiStateView extends FrameLayout {
                 mContentView = view;
                 addView(mContentView);
                 break;
+
+            case VIEW_STATE_UNKNOWN:
+                if (mUnknowView != null) removeView(mUnknowView);
+                mUnknowView = view;
+                addView(mUnknowView);
+                break;
         }
 
         setView(VIEW_STATE_UNKNOWN);
         if (switchToState) setViewState(state);
     }
 
+
     /**
      * Sets the {@link View} for the given {@link com.kennyc.view.MultiStateView.ViewState}
      *
-     * @param view  The {@link View} to use
+     * @param view The {@link View} to use
      * @param state The {@link com.kennyc.view.MultiStateView.ViewState} to set
      */
     public void setViewForState(View view, @ViewState int state) {
         setViewForState(view, state, false);
     }
 
+
     /**
      * Sets the {@link View} for the given {@link com.kennyc.view.MultiStateView.ViewState}
      *
-     * @param layoutRes     Layout resource id
-     * @param state         The {@link com.kennyc.view.MultiStateView.ViewState} to set
+     * @param layoutRes Layout resource id
+     * @param state The {@link com.kennyc.view.MultiStateView.ViewState} to set
      * @param switchToState If the {@link com.kennyc.view.MultiStateView.ViewState} should be switched to
      */
     public void setViewForState(@LayoutRes int layoutRes, @ViewState int state, boolean switchToState) {
@@ -379,24 +439,25 @@ public class MultiStateView extends FrameLayout {
         setViewForState(view, state, switchToState);
     }
 
+
     /**
      * Sets the {@link View} for the given {@link com.kennyc.view.MultiStateView.ViewState}
      *
      * @param layoutRes Layout resource id
-     * @param state     The {@link View} state to set
+     * @param state The {@link View} state to set
      */
     public void setViewForState(@LayoutRes int layoutRes, @ViewState int state) {
         setViewForState(layoutRes, state, false);
     }
 
+
     /**
      * Sets whether an animate will occur when changing between {@link ViewState}
-     *
-     * @param animate
      */
     public void setAnimateLayoutChanges(boolean animate) {
         mAnimateViewChanges = animate;
     }
+
 
     /**
      * Sets the {@link StateListener} for the view
@@ -406,6 +467,7 @@ public class MultiStateView extends FrameLayout {
     public void setStateListener(StateListener listener) {
         mListener = listener;
     }
+
 
     /**
      * Animates the layout changes between {@link ViewState}
@@ -430,6 +492,7 @@ public class MultiStateView extends FrameLayout {
         });
         anim.start();
     }
+
 
     public interface StateListener {
         /**
